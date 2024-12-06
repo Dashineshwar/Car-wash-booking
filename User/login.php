@@ -1,4 +1,3 @@
-//this is for me to test the github changes
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -249,6 +248,13 @@
         </form>
         <br>
         <a href="reset_password.php" class="reset-password">Forgot password?</a>
+        <div class="social-login">
+            <button class="btn" onclick="location.href='social_login.php?provider=Google'">
+                <i class="fab fa-google"></i> Sign in with Google
+            </button>
+        </div>
+
+
 
     </div>
     <script>
