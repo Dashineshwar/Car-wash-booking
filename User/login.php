@@ -1,4 +1,3 @@
-//this is for me to test the github changes
 <!DOCTYPE html>
 <html lang="en">
 <head>
