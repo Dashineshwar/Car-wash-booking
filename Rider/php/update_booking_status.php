@@ -117,6 +117,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception("Failed to insert company transaction: " . $insertCompanyStmt->error);
                 }
 
+
+                // Step 6: Insert a new review entry for this booking
+                $insertReviewQuery = "INSERT INTO reviews (booking_id, user_id, review_status) VALUES (?, ?, 'pending')";
+                $insertReviewStmt = $conn->prepare($insertReviewQuery);
+                $insertReviewStmt->bind_param("ii", $booking_id, $user_id);
+
+                if (!$insertReviewStmt->execute()) {
+                    throw new Exception("Failed to insert review entry: " . $insertReviewStmt->error);
+                }
+                $insertCompanyStmt->execute(); // Insert company transaction
+
+
+
                 // Commit all changes
                 mysqli_commit($conn);
                 echo json_encode(['status' => 'success', 'message' => 'Transactions logged successfully']);

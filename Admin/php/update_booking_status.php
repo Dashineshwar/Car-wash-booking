@@ -35,6 +35,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateCompanyWallet = "UPDATE wallet SET wallet = wallet + $company_share WHERE id = 1";
                 mysqli_query($conn, $updateCompanyWallet);
 
+                // Step 6: Insert a new review entry for this booking
+                $insertReviewQuery = "INSERT INTO reviews (booking_id, user_id, review_status) VALUES (?, ?, 'pending')";
+                $insertReviewStmt = $conn->prepare($insertReviewQuery);
+                $insertReviewStmt->bind_param("ii", $booking_id, $user_id);
+
+                if (!$insertReviewStmt->execute()) {
+                    throw new Exception("Failed to insert review entry: " . $insertReviewStmt->error);
+                }
+                $insertCompanyStmt->execute(); // Insert company transaction
+
                 echo json_encode(['status' => 'success', 'message' => 'Status updated and wallets adjusted']);
             } else {
                 echo json_encode(['status' => 'error', 'message' => 'Booking not found']);

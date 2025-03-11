@@ -18,8 +18,7 @@ error_reporting(E_ALL);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Bookings</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"> <!-- For icons -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"> 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
@@ -67,7 +66,6 @@ error_reporting(E_ALL);
         </tr>
         </thead>
         <tbody>
-        <!-- Rows will be populated dynamically -->
         </tbody>
     </table>
 </div>
@@ -93,16 +91,14 @@ error_reporting(E_ALL);
                             <td>${booking.status}</td>
                             <td>
                                 ${booking.status === 'pending' ? `
-                                    <button class="btn btn-danger btn-sm cancel-booking-btn" data-booking-id="${booking.booking_id}">Cancel</button>
+                                    <a href="reschedule_booking.php?booking_id=${booking.booking_id}&current_date=${booking.booking_time}" 
+                                        class="btn btn-warning btn-sm">Reschedule</a>
                                 ` : ''}
                             </td>
                         </tr>
                     `;
                     tbody.append(row);
                 });
-
-                // Attach cancel event listeners
-                attachCancelListeners();
             } else {
                 tbody.html('<tr><td colspan="7" class="text-center">No bookings found.</td></tr>');
             }
@@ -132,34 +128,6 @@ error_reporting(E_ALL);
                 }
             });
         }
-
-        function attachCancelListeners() {
-            $('.cancel-booking-btn').off('click').on('click', function () {
-                const bookingId = $(this).data('booking-id');
-
-                if (confirm('Are you sure you want to cancel this booking?')) {
-                    $.ajax({
-                        url: 'php/cancel_booking.php',
-                        type: 'POST',
-                        data: { booking_id: bookingId },
-                        dataType: 'json',
-                        success: function (response) {
-                            if (response.success) {
-                                alert('Booking cancelled successfully.');
-                                fetchBookings(); // Refresh the table
-                            } else {
-                                alert('Failed to cancel booking: ' + response.message);
-                            }
-                        },
-                        error: function (xhr, status, error) {
-                            console.error('Error cancelling booking:', error);
-                            alert('An error occurred while cancelling the booking.');
-                        }
-                    });
-                }
-            });
-        }
-
 
         // Fetch today's and future bookings by default
         function fetchTodayAndFutureBookings() {

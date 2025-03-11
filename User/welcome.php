@@ -47,7 +47,7 @@ body {
 }
 
 .vehicle-btn {
-    background-color: #007bff;
+    background-color:rgb(44, 62, 80);
     color: #fff;
     border: none;
     padding: 10px 20px;
@@ -56,7 +56,7 @@ body {
     cursor: pointer;
 }
 .vehicle-btn:hover {
-    background-color: #0056b3;
+    background-color:rgb(44, 62, 80);
 }
 .car-info {
     border: 1px solid #ccc;
@@ -67,7 +67,7 @@ body {
     background-color: #f9f9f9;
 }
 .booking-btn {
-    background-color: #28a745;
+    background-color: rgb(44, 62, 80);
     color: #fff;
     border: none;
     padding: 10px 20px;
@@ -76,7 +76,7 @@ body {
     cursor: pointer;
 }
 .booking-btn:hover {
-    background-color: #218838;
+    background-color: rgb(44, 62, 80);
 }
 #receipt {
     border: 1px solid #ccc;
@@ -88,7 +88,7 @@ body {
     display: none;
 }
 .continue-btn {
-    background-color: #007bff;
+    background-color: rgb(44, 62, 80);
     color: #fff;
     border: none;
     padding: 10px 20px;
@@ -97,7 +97,7 @@ body {
     cursor: pointer;
 }
 .continue-btn:hover {
-    background-color: #0056b3;
+    background-color: rgbrgb(44, 62, 80);
 }
 
 /* Sidebar toggle button */
@@ -105,7 +105,7 @@ body {
     position: absolute;
     top: 15px;
     left: 15px;
-    background-color: #007bff;
+    background-color: rgb(44, 62, 80);
     color: white;
     padding: 10px 15px;
     border-radius: 5px;
@@ -129,7 +129,7 @@ body {
 <div id="content">
     <div class="container">
         <br>
-        <h1 class="text-center mb-4">Welcome to Alphasphinx Car Wash</h1>
+        <h1 class="text-center mb-4">Welcome to Dashing</h1>
 
         <div class="text-center">
             <button class="vehicle-btn" data-type="All My Vehicle">All My Vehicle</button> <!-- New Button -->

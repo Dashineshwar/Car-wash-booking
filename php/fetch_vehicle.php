@@ -37,13 +37,13 @@ if (isset($_POST['vehicle_type'])) {
 
     if ($result->num_rows > 0) {
         // If vehicles are found, display them in a dropdown
-        echo "<h3>Owned Vehicles: $vehicle_type</h3>";
+        echo "<h3>$vehicle_type</h3>";
         echo "<select id='vehicle-select' class='form-control'>";
-        echo "<option value=''>Select your vehicle</option>";
+        echo "<option value=''>Pick your ride and let’s get it sparkling!</option>";
         while ($row = $result->fetch_assoc()) {
             $vehicle_info = $row['number_plate'] . " (" . $row['brand'] . " " . $row['model'] . ")";
             $vehicle_id = $row['id']; // Assuming there is a unique ID for each vehicle
-            echo "<option value='" . $vehicle_id . "'>" . $vehicle_info . "</option>";
+            echo "<option value='" .$row['number_plate']. "'>" . $vehicle_info . "</option>";
         }
         echo "</select>";
         echo "<div id='service-select-container' style='display: none; margin-top: 20px;'></div>";

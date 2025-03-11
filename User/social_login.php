@@ -38,7 +38,7 @@ if ($provider) {
             $_SESSION["phone"] = $user['phone_no'];
 
             // Redirect to the main dashboard
-            header("Location: ../User/welcome.php");
+            header("Location: ../User/info.php");
             exit;
         } else {
             // New user, redirect to the registration page
