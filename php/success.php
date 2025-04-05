@@ -1,94 +1,78 @@
 <?php
-include '../includes/session.php';
-require '../vendor/autoload.php';
-\Stripe\Stripe::setApiKey('sk_test_51PoGYVP0jYcAiYG4mQDz0U0hTRyrSpJk6lwlr9gEKSoAWV9fSBCpJSSKcdryu6G1XgKjwa99GfzfMWWs5YsdH6cu005nZLTegM');
+session_start();
+include '../includes/connection.php';
 
-// Retrieve the session ID from the URL
-$session_id = $_GET['session_id'];
+// ✅ Step 1: Check if payment was successful
+if (!isset($_GET['billplz']['id']) || !isset($_GET['billplz']['paid']) || $_GET['billplz']['paid'] !== "true") {
+    echo "Payment failed or was not completed.";
+    exit();
+}
 
-try {
-    // Retrieve the session from Stripe
-    $session = \Stripe\Checkout\Session::retrieve($session_id);
+// ✅ Step 2: Retrieve Billplz Payment Details
+$payment_id = $_GET['billplz']['id']; // Billplz Payment ID
 
-    // Assuming you have a database connection established
-    include '../includes/connection.php';
+// ✅ Step 3: Extract Booking Details from SESSION (since Billplz doesn't store metadata like Stripe)
+$user_id = $_SESSION["id"];
+$phone_no = $_SESSION["phone"];
+$plate = $_SESSION["plate"];
+$service_type = $_SESSION["service"];
+$booking_type = $_SESSION["type"];
+$price = $_SESSION["price"];
+$description = $_SESSION["description"];
+$date = $_SESSION["date"];
+$time = $_SESSION["time"];
+$address_line_1 = $_SESSION["address_line_1"];
+$address_line_2 = $_SESSION["address_line_2"];
+$postcode = $_SESSION["postcode"];
+$city = $_SESSION["city"];
+$state = $_SESSION["state"];
+$country = $_SESSION["country"];
 
-    // Extract user details from the session
-    $user_id = $_SESSION["id"];
-    $phone_no = $_SESSION["phone"];
+// ✅ Step 4: Ensure booking time format is correct
+$booking_time = date('Y-m-d H:i:s', strtotime("$date $time"));
 
-    // Extract the metadata details from the Stripe session
-    $plate = $session->metadata->plate;
-    $service_type = $session->metadata->service;
-    $booking_type = $session->metadata->type;
-    $price = $session->amount_total / 100; // Convert from cents to MYR
-    $description = $session->metadata->description;
-    $date = $session->metadata->date;
-    $time = $session->metadata->time;
+// ✅ Step 5: Find an Available Rider
+$rider_query = "SELECT rider_id FROM rider WHERE serving_postcode = '$postcode' AND available = 1";
+$rider_result = mysqli_query($conn, $rider_query);
 
-    // Extract the individual address components from the metadata
-    $address_line_1 = $session->metadata->address_line_1;
-    $address_line_2 = $session->metadata->address_line_2;
-    $postcode = $session->metadata->postcode;
-    $city = $session->metadata->city;
-    $state = $session->metadata->state;
-    $country = $session->metadata->country;
+$rider_id = null; // Default value if no riders are available
 
-    // Combine the address components into one string
-    $full_address = trim($address_line_1 . ', ' . $address_line_2 . ', ' . $postcode . ', ' . $city . ', ' . $state . ', ' . $country, ', ');
+if (mysqli_num_rows($rider_result) > 0) {
+    while ($rider_row = mysqli_fetch_assoc($rider_result)) {
+        $potential_rider_id = $rider_row['rider_id'];
 
-    $payment_status = 'paid';
-    $status = 'pending'; // Initial status after booking
+        // Check if rider is available for the selected time slot
+        $slot_check_query = "SELECT * FROM booked_slots WHERE rider_id = '$potential_rider_id' AND slot_date = '$date' AND slot_time = '$time'";
+        $slot_check_result = mysqli_query($conn, $slot_check_query);
 
-    // Combine date and time into one datetime string for the booking_time field
-    $booking_time = date('Y-m-d H:i:s', strtotime("$date $time"));
-
-    // Step 1: Find an available rider
-    // Query to find all riders serving the same postcode
-    $rider_query = "SELECT rider_id FROM rider WHERE serving_postcode = '$postcode' AND available = 1";
-    $rider_result = mysqli_query($conn, $rider_query);
-
-    $rider_id = null; // Initialize with null in case no rider is available
-
-    if (mysqli_num_rows($rider_result) > 0) {
-        while ($rider_row = mysqli_fetch_assoc($rider_result)) {
-            $potential_rider_id = $rider_row['rider_id'];
-
-            // Check if the rider is available for the selected time slot in booked_slots
-            $slot_check_query = "SELECT * FROM booked_slots WHERE rider_id = '$potential_rider_id' AND slot_date = '$date' AND slot_time = '$time'";
-            $slot_check_result = mysqli_query($conn, $slot_check_query);
-
-            if (mysqli_num_rows($slot_check_result) == 0) {
-                // Rider is available, assign them
-                $rider_id = $potential_rider_id;
-                break;
-            }
+        if (mysqli_num_rows($slot_check_result) == 0) {
+            // Rider is available, assign them
+            $rider_id = $potential_rider_id;
+            break;
         }
     }
-
-    if ($rider_id) {
-        // Step 2: Insert booking details into the booking table first
-        $booking_query = "INSERT INTO booking (user_id, service_type, booking_type, price, booking_time, address_line_1, address_line_2, postcode, city, state, country, phone_no, payment_status, rider_id, status)
-                          VALUES ('$user_id', '$service_type', '$booking_type', '$price', '$booking_time', '$address_line_1', '$address_line_2', '$postcode', '$city', '$state', '$country', '$phone_no', '$payment_status', '$rider_id', '$status')";
-        mysqli_query($conn, $booking_query);
-
-        // Get the last inserted booking_id
-        $booking_id = mysqli_insert_id($conn);
-
-        // Step 3: Insert the time slot into booked_slots using the newly generated booking_id
-        $booked_slot_query = "INSERT INTO booked_slots (rider_id, slot_time, slot_date, booking_id, postcode) 
-                              VALUES ('$rider_id', '$time', '$date', '$booking_id', '$postcode')";
-        mysqli_query($conn, $booked_slot_query);
-    } else {
-        // Handle case when no riders are available
-        echo "No riders available for the selected time slot.";
-        exit();
-    }
-
-    // Redirect to a thank you or confirmation page
-    header("Location: thank_you.php");
-    exit();
-} catch (Exception $e) {
-    echo 'Payment failed: ' . $e->getMessage();
 }
+
+// ✅ Step 6: Store Booking Data in DB if Rider is Available
+if ($rider_id) {
+    // Insert booking details
+    $booking_query = "INSERT INTO booking (user_id, service_type, booking_type, price, booking_time, address_line_1, address_line_2, postcode, city, state, country, phone_no, payment_status, rider_id, status)
+                      VALUES ('$user_id', '$service_type', '$booking_type', '$price', '$booking_time', '$address_line_1', '$address_line_2', '$postcode', '$city', '$state', '$country', '$phone_no', 'paid', '$rider_id', 'pending')";
+    mysqli_query($conn, $booking_query);
+
+    // Get last inserted booking_id
+    $booking_id = mysqli_insert_id($conn);
+
+    // Insert the booked slot
+    $booked_slot_query = "INSERT INTO booked_slots (rider_id, slot_time, slot_date, booking_id, postcode) 
+                          VALUES ('$rider_id', '$time', '$date', '$booking_id', '$postcode')";
+    mysqli_query($conn, $booked_slot_query);
+} else {
+    echo "No riders available for the selected time slot.";
+    exit();
+}
+
+// ✅ Step 7: Redirect to Thank You Page
+header("Location: thank_you.php");
+exit();
 ?>

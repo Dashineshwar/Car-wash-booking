@@ -31,13 +31,21 @@ for ($hour = 8; $hour < 20; $hour++) {
     }
 }
 
-// Calculate available slots
-$available_slots = [];
+$current_time = $_POST['current_time'];
+$current_date = $_POST['current_date'];
+$date = $_POST['date']; // the selected date from frontend
+
 foreach ($all_time_slots as $slot) {
-    if (!isset($booked_slots[$slot]) || $booked_slots[$slot] < $total_riders) {
+    if (
+        !($date === $current_date && $slot === $current_time) && // only exclude same date+time
+        (!isset($booked_slots[$slot]) || $booked_slots[$slot] < $total_riders)
+    ) {
         $available_slots[] = $slot;
     }
 }
+
+
+
 
 // Send available slots back as JSON response
 $response = [

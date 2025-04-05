@@ -209,8 +209,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="logo">
             <img src="../images/official_logo.jpg" alt="Logo">
         </div>
-        <h1 style="padding-bottom: -100px;">Welcome to Dash</h1>
-        <p class="subtitle">Your only option to a dashing car wash</p>
+        <h1 style="padding-bottom: -100px;">Welcome to QuikWash</h1>
+        <p class="subtitle">Your only option to a digital car wash</p>
         <button class="btn-google" onclick="location.href='social_login.php?provider=Google'">
             <img src="../images/icons/google.png" alt="Google Logo">
             Continue with Google

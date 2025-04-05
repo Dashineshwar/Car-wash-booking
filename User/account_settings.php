@@ -167,5 +167,16 @@ $stmt->close();
 </script>
 
 <?php include '../includes/footer.php'; ?>
+<!-- JS Scripts (included once only!) -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Optional fix: prevent hash jump on modal links
+    $(document).on('click', '[data-toggle="modal"]', function (e) {
+        e.preventDefault();
+    });
+</script>
+
 </body>
 </html>

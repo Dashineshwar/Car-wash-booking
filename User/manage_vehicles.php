@@ -3,13 +3,17 @@ include '../includes/session.php';
 include '../includes/connection.php';
 include '../includes/topbar.php';
 
-// Fetch all vehicles belonging to the logged-in user
-$username = $_SESSION['username']; // Assuming the username is stored in the session
+$username = $_SESSION['username'];
 $query = "SELECT * FROM vehicle WHERE username = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
+
+$vehicles = [];
+while ($row = $result->fetch_assoc()) {
+    $vehicles[] = $row;
+}
 ?>
 
 <!DOCTYPE html>
@@ -19,63 +23,86 @@ $result = $stmt->get_result();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Vehicles</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"> <!-- For icons -->
     <style>
-        body {
-            background-color: #f8f9fa;
+        body { background-color: #f8f9fa; }
+        .container { margin-top: 30px; }
+        .card-vehicle {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
         }
-        .card {
-            max-width: 900px;
-            margin: 20px auto;
-        }
+        .card-vehicle h5 { margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container mt-5">
+<div class="container">
     <h2 class="text-center mb-4">Manage Your Vehicles</h2>
-    <button class="btn btn-success mb-3" data-toggle="modal" data-target="#addVehicleModal">Add New Vehicle</button>
-    <a href="welcome.php" class="btn btn-primary mb-3">Book a car wash</a>
+    <div class="text-center mb-3">
+        <button class="btn btn-success" data-toggle="modal" data-target="#addVehicleModal">Add New Vehicle</button>
+        <a href="welcome.php" class="btn btn-primary">Book a car wash</a>
+    </div>
 
-
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-bordered">
-                <thead>
+    <!-- Desktop Table View -->
+    <div class="table-responsive d-none d-lg-block">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Number Plate</th>
+                    <th>Type</th>
+                    <th>Brand</th>
+                    <th>Model</th>
+                    <th>Registered Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($vehicles as $row): ?>
                     <tr>
-                        <th>Number Plate</th>
-                        <th>Type</th>
-                        <th>Brand</th>
-                        <th>Model</th>
-                        <th>Registered Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php while ($row = $result->fetch_assoc()): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row['number_plate']); ?></td>
-                        <td><?php echo htmlspecialchars($row['type']); ?></td>
-                        <td><?php echo htmlspecialchars($row['brand']); ?></td>
-                        <td><?php echo htmlspecialchars($row['model']); ?></td>
-                        <td><?php echo htmlspecialchars($row['registered_date']); ?></td>
+                        <td><?= htmlspecialchars($row['number_plate']); ?></td>
+                        <td><?= htmlspecialchars($row['type']); ?></td>
+                        <td><?= htmlspecialchars($row['brand']); ?></td>
+                        <td><?= htmlspecialchars($row['model']); ?></td>
+                        <td><?= htmlspecialchars($row['registered_date']); ?></td>
                         <td>
-                            <button class="btn btn-primary btn-sm edit-btn" 
-                                    data-id="<?php echo $row['id']; ?>" 
-                                    data-number-plate="<?php echo $row['number_plate']; ?>" 
-                                    data-type="<?php echo $row['type']; ?>" 
-                                    data-brand="<?php echo $row['brand']; ?>" 
-                                    data-model="<?php echo $row['model']; ?>" 
-                                    data-toggle="modal" data-target="#editVehicleModal">Edit</button>
-                            <a href="php/vehicle/delete_vehicle.php?id=<?php echo $row['id']; ?>" 
-                               class="btn btn-danger btn-sm" 
-                               onclick="return confirm('Are you sure you want to delete this vehicle?');">Delete</a>
+                            <button class="btn btn-primary btn-sm edit-btn"
+                                data-id="<?= $row['id']; ?>"
+                                data-number-plate="<?= $row['number_plate']; ?>"
+                                data-type="<?= $row['type']; ?>"
+                                data-brand="<?= $row['brand']; ?>"
+                                data-model="<?= $row['model']; ?>"
+                                data-toggle="modal" data-target="#editVehicleModal">Edit</button>
+                            <a href="php/vehicle/delete_vehicle.php?id=<?= $row['id']; ?>"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Are you sure?');">Delete</a>
                         </td>
                     </tr>
-                <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="d-lg-none">
+        <?php foreach ($vehicles as $row): ?>
+            <div class="card-vehicle bg-white shadow-sm">
+                <h5><?= htmlspecialchars($row['number_plate']); ?> (<?= htmlspecialchars($row['brand']); ?>)</h5>
+                <p><strong>Type:</strong> <?= htmlspecialchars($row['type']); ?></p>
+                <p><strong>Model:</strong> <?= htmlspecialchars($row['model']); ?></p>
+                <p><strong>Registered:</strong> <?= htmlspecialchars($row['registered_date']); ?></p>
+                <button class="btn btn-warning btn-sm edit-btn"
+                    data-id="<?= $row['id']; ?>"
+                    data-number-plate="<?= $row['number_plate']; ?>"
+                    data-type="<?= $row['type']; ?>"
+                    data-brand="<?= $row['brand']; ?>"
+                    data-model="<?= $row['model']; ?>"
+                    data-toggle="modal" data-target="#editVehicleModal">Edit</button>
+                <a href="php/vehicle/delete_vehicle.php?id=<?= $row['id']; ?>"
+                   class="btn btn-danger btn-sm ml-2"
+                   onclick="return confirm('Are you sure?');">Delete</a>
+            </div>
+        <?php endforeach; ?>
     </div>
 </div>
 
@@ -89,32 +116,20 @@ $result = $stmt->get_result();
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label>Number Plate</label>
-                        <input type="text" class="form-control" name="number_plate" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Type</label>
-                        <select class="form-control" name="type" required>
-                            <option value="Sedan">Sedan</option>
-                            <option value="SUV">SUV</option>
-                            <option value="MPV">MPV</option>
-                            <option value="Van">Van</option>
-                            <option value="Lorry">Lorry</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Brand</label>
-                        <input type="text" class="form-control" name="brand" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Model</label>
-                        <input type="text" class="form-control" name="model" required>
-                    </div>
+                    <input type="text" name="number_plate" class="form-control mb-2" placeholder="Number Plate" required>
+                    <select name="type" class="form-control mb-2" required>
+                        <option value="Sedan">Sedan</option>
+                        <option value="SUV">SUV</option>
+                        <option value="MPV">MPV</option>
+                        <option value="Van">Van</option>
+                        <option value="Lorry">Lorry</option>
+                    </select>
+                    <input type="text" name="brand" class="form-control mb-2" placeholder="Brand" required>
+                    <input type="text" name="model" class="form-control" placeholder="Model" required>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-success">Add Vehicle</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 </div>
             </form>
         </div>
@@ -132,56 +147,41 @@ $result = $stmt->get_result();
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="id" id="edit-id">
-                    <div class="form-group">
-                        <label>Number Plate</label>
-                        <input type="text" class="form-control" name="number_plate" id="edit-number-plate" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Type</label>
-                        <select class="form-control" name="type" id="edit-type" required>
-                            <option value="Sedan">Sedan</option>
-                            <option value="SUV">SUV</option>
-                            <option value="MPV">MPV</option>
-                            <option value="Van">Van</option>
-                            <option value="Lorry">Lorry</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Brand</label>
-                        <input type="text" class="form-control" name="brand" id="edit-brand" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Model</label>
-                        <input type="text" class="form-control" name="model" id="edit-model" required>
-                    </div>
+                    <input type="text" name="number_plate" id="edit-number-plate" class="form-control mb-2" required>
+                    <select name="type" id="edit-type" class="form-control mb-2" required>
+                        <option value="Sedan">Sedan</option>
+                        <option value="SUV">SUV</option>
+                        <option value="MPV">MPV</option>
+                        <option value="Van">Van</option>
+                        <option value="Lorry">Lorry</option>
+                    </select>
+                    <input type="text" name="brand" id="edit-brand" class="form-control mb-2" required>
+                    <input type="text" name="model" id="edit-model" class="form-control" required>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Populate the edit modal with vehicle data
-    $('.edit-btn').on('click', function() {
-        const id = $(this).data('id');
-        const numberPlate = $(this).data('number-plate');
-        const type = $(this).data('type');
-        const brand = $(this).data('brand');
-        const model = $(this).data('model');
-
-        $('#edit-id').val(id);
-        $('#edit-number-plate').val(numberPlate);
-        $('#edit-type').val(type);
-        $('#edit-brand').val(brand);
-        $('#edit-model').val(model);
+    $(document).ready(function () {
+        $('.edit-btn').on('click', function () {
+            $('#edit-id').val($(this).data('id'));
+            $('#edit-number-plate').val($(this).data('number-plate'));
+            $('#edit-type').val($(this).data('type'));
+            $('#edit-brand').val($(this).data('brand'));
+            $('#edit-model').val($(this).data('model'));
+        });
     });
 </script>
 
 <?php include '../includes/footer.php'; ?>
-
 </body>
 </html>

@@ -72,6 +72,9 @@ foreach ($all_time_slots as $slot) {
             <h5 class="card-title">Booking Details</h5>
             <p><strong>Service Type:</strong> <?php echo htmlspecialchars($booking['service_type']); ?></p>
             <p><strong>Current Booking Time:</strong> <?php echo date('d M Y, h:i A', strtotime($booking['booking_time'])); ?></p>
+            <input type="hidden" id="current_date" value="<?php echo date('Y-m-d', strtotime($booking['booking_time'])); ?>">
+            <input type="hidden" id="current_time" value="<?php echo date('H:i:s', strtotime($booking['booking_time'])); ?>">
+
             <p><strong>Address:</strong> <?php echo htmlspecialchars("{$booking['address_line_1']}, {$booking['address_line_2']}, {$booking['city']}, {$booking['state']}, {$booking['country']}"); ?></p>
             
             <form action="php/update_reschedule.php" method="POST">
@@ -105,37 +108,47 @@ foreach ($all_time_slots as $slot) {
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function() {
-    $('#new_date').on('change', function() {
-        const selectedDate = $(this).val();
-        const postcode = "<?php echo $booking['postcode']; ?>";
+$('#new_date').on('change', function () {
+    const rawDate = $(this).val(); // format might be dd/mm/yyyy or yyyy-mm-dd
+    const selectedDate = new Date(rawDate);
+    
+    const yyyy = selectedDate.getFullYear();
+    const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(selectedDate.getDate()).padStart(2, '0');
+    const formattedDate = `${yyyy}-${mm}-${dd}`; // '2025-03-07'
 
-        $.ajax({
-            url: '../php/fetch_reschedule_slots.php',
-            type: 'POST',
-            data: { date: selectedDate, postcode: postcode },
-            success: function(response) {
-                const responseData = JSON.parse(response);
-                const timeDropdown = $('#new_time');
-                timeDropdown.empty();
-                
-                if (responseData.available_slots.length > 0) {
-                    timeDropdown.append('<option value="">Choose a time slot</option>');
-                    responseData.available_slots.forEach(slot => {
-                        timeDropdown.append(`<option value="${slot}">${slot}</option>`);
-                    });
-                } else {
-                    timeDropdown.append('<option value="">No slots available</option>');
-                }
-            },
-            error: function(xhr) {
-                console.error("Error fetching time slots: " + xhr.responseText);
+    const postcode = "<?php echo $booking['postcode']; ?>";
+    const currentTime = $('#current_time').val();
+    const currentDate = $('#current_date').val();
+
+    $.ajax({
+        url: '../php/fetch_reschedule_slots.php',
+        type: 'POST',
+        data: {
+            date: formattedDate,
+            postcode: postcode,
+            current_time: currentTime,
+            current_date: currentDate
+        },
+        success: function (response) {
+            const responseData = JSON.parse(response);
+            const timeDropdown = $('#new_time');
+            timeDropdown.empty();
+
+            if (responseData.available_slots.length > 0) {
+                timeDropdown.append('<option value="">Choose a time slot</option>');
+                responseData.available_slots.forEach(slot => {
+                    timeDropdown.append(`<option value="${slot}">${slot}</option>`);
+                });
+            } else {
+                timeDropdown.append('<option value="">No slots available</option>');
             }
-        });
+        },
+        error: function (xhr) {
+            console.error("Error fetching time slots: " + xhr.responseText);
+        }
     });
 });
-
-
 
 </script>
 

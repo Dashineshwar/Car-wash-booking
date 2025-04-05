@@ -18,6 +18,7 @@ if (isset($_POST['vehicle_type'])) {
         $types .= "s"; // Parameter type for vehicle type
     }
 
+
     // Add criteria filtering if provided
     if (isset($_POST['criteria']) && !empty($_POST['criteria'])) {
         $criteria = $_POST['criteria'];
@@ -25,8 +26,8 @@ if (isset($_POST['vehicle_type'])) {
         $like_criteria = '%' . $criteria . '%';
         $params[] = $like_criteria;
         $params[] = $like_criteria;
-        $params[] = $like_criteria;
-        $types .= "sss"; // Parameter types for the three LIKE statements
+        $params[] = $like_criteria; 
+        $types .= "sss"; 
     }
 
     // Prepare and execute the statement
@@ -36,20 +37,30 @@ if (isset($_POST['vehicle_type'])) {
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        // If vehicles are found, display them in a dropdown
         echo "<h3>$vehicle_type</h3>";
         echo "<select id='vehicle-select' class='form-control'>";
         echo "<option value=''>Pick your ride and let’s get it sparkling!</option>";
         while ($row = $result->fetch_assoc()) {
             $vehicle_info = $row['number_plate'] . " (" . $row['brand'] . " " . $row['model'] . ")";
-            $vehicle_id = $row['id']; // Assuming there is a unique ID for each vehicle
-            echo "<option value='" .$row['number_plate']. "'>" . $vehicle_info . "</option>";
+            echo "<option value='" . $row['number_plate'] . "'>$vehicle_info</option>";
         }
         echo "</select>";
-        echo "<div id='service-select-container' style='display: none; margin-top: 20px;'></div>";
+    
+        // 👇👇 Add this container to allow JS to inject service and booking buttons
+        echo "<div id='service-select-container' class='card-ui mt-4' style='display: none;'></div>";
+    
     } else {
-        echo "<p>No vehicles found for the selected type.</p>";
+        echo "
+            <div class='text-center'>
+                <p>No vehicles found for the selected type.</p>
+                <a href='manage_vehicles.php' class='btn btn-danger rounded-pill px-4 mt-3'>
+                    Please register a vehicle first
+                </a>
+            </div>
+        ";
     }
+    
+    
 
     $stmt->close();
 } else {
